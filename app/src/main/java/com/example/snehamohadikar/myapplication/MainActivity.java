@@ -21,10 +21,12 @@ import java.net.URI;
 import java.net.URL;
 import java.io.File;
 
+import android.location.*;
 import android.os.Environment;
 
 import java.io.OutputStream;
 import java.io.*;
+import java.io.InputStream;
 
 import android.widget.Toast;
 import android.net.Uri;
@@ -34,10 +36,17 @@ import android.util.Log;
 
 import java.util.Random;
 
+import android.location.*;
+
+import com.google.android.gms.location.*;
+import com.google.android.gms.location.LocationListener;
+
 public class MainActivity extends AppCompatActivity {
 
     private Button btnCamera1;
+    private Button btnCamera2;
     private ImageView capturedImage;
+    GPS gp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,105 +54,48 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         btnCamera1 = findViewById(R.id.btnCamera);
         capturedImage = findViewById(R.id.capturedImage);
+        btnCamera2 = findViewById(R.id.button2);
         btnCamera1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 openCamera();
             }
         });
+
+        btnCamera2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                gp = new GPS(MainActivity.this);
+
+                // check if GPS enabled
+                if (gp.canGetLocation()) {
+
+                    double latitude = gp.getLatitude();
+                    double longitude = gp.getLongitude();
+
+                    // \n is for new line
+                    Toast.makeText(getApplicationContext(), "Your Location is - \nLat: " + latitude + "\nLong: " + longitude, Toast.LENGTH_LONG).show();
+                } else {
+                    // can't get location
+                    // GPS or Network is not enabled
+                    // Ask user to enable GPS/network in settings
+                    gp.showSettingsAlert();
+                }
+
+            }
+        });
     }
 
 
-   /* public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }*/
 
 
-  /*  public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }*/
 
     private void openCamera() {
         Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
         startActivityForResult(intent, 0);
     }
 
-  /*  boolean storeImage(Bitmap bp, String filename) {
-        //get path to external storage (SD card)
-        File sdIconStorageDir = new File(getExternalFilesDir(null), filename);
-
-        //create storage directories, if they don't exist
-        sdIconStorageDir.mkdirs();
-
-        try {
-           *//* String filePath = sdIconStorageDir.toString() + filename;
-            FileOutputStream fileOutputStream = new FileOutputStream(filePath);
-
-            BufferedOutputStream bos = new BufferedOutputStream(fileOutputStream);
-
-            //choose another format if PNG doesn't suit you
-            bp.compress(CompressFormat.PNG, 100, bos);
-
-            bos.flush();
-            bos.close();
-            *//*
-
-            OutputStream ois=new FileOutputStream(sdIconStorageDir);
-            InputStream is=bp.compress(CompressFormat.JPEG,100,ois);
-           byte[] data= new byte[is.available()];
-           is.read(data);
-           ois.write(data);
-           is.close();
-           ois.close();
-        } catch (FileNotFoundException e) {
-            Log.w("TAG", "Error saving image file: " + e.getMessage());
-            return false;
-        } catch (IOException e) {
-            Log.w("TAG", "Error saving image file: " + e.getMessage());
-            return false;
-        }
-        return true;
-    }*/
-
-    public void SaveImage(Bitmap showedImgae) {
-
-        String root = Environment.getExternalStorageDirectory().toString();
-        File myDir = new File(root + "/DCIM/myCapturedImages");
-        myDir.mkdirs();
-        Random generator = new Random();
-        int n = 10000;
-        n = generator.nextInt(n);
-        String fname = "FILENAME-" + n + ".jpg";
-        File file = new File(myDir, fname);
-        if (file.exists()) file.delete();
-        try {
-            FileOutputStream out = new FileOutputStream(file);
-            showedImgae.compress(Bitmap.CompressFormat.JPEG, 100, out);
-            Toast.makeText(MainActivity.this, "Image Saved", Toast.LENGTH_SHORT).show();
-            out.flush();
-            out.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-        Uri contentUri = Uri.fromFile(file);
-        mediaScanIntent.setData(contentUri);
-        getApplicationContext().sendBroadcast(mediaScanIntent);
-    }
+    // Acquire a reference to the system Location Manager
 
 
     @Override
@@ -154,8 +106,7 @@ public class MainActivity extends AppCompatActivity {
             Bitmap bp = (Bitmap) data.getExtras().get("data");
             capturedImage.setImageBitmap(bp);
 
-            //storeImage(bp,"kanchu");
-            SaveImage(bp);
+
         }
     }
 
