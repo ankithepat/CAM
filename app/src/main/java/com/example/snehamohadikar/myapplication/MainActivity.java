@@ -32,6 +32,8 @@ import android.content.Context;
 import android.graphics.Bitmap.CompressFormat;
 import android.util.Log;
 
+import java.util.Random;
+
 public class MainActivity extends AppCompatActivity {
 
     private Button btnCamera1;
@@ -78,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(intent, 0);
     }
 
-    boolean storeImage(Bitmap bp, String filename) {
+  /*  boolean storeImage(Bitmap bp, String filename) {
         //get path to external storage (SD card)
         File sdIconStorageDir = new File(getExternalFilesDir(null), filename);
 
@@ -86,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
         sdIconStorageDir.mkdirs();
 
         try {
-           /* String filePath = sdIconStorageDir.toString() + filename;
+           *//* String filePath = sdIconStorageDir.toString() + filename;
             FileOutputStream fileOutputStream = new FileOutputStream(filePath);
 
             BufferedOutputStream bos = new BufferedOutputStream(fileOutputStream);
@@ -96,15 +98,15 @@ public class MainActivity extends AppCompatActivity {
 
             bos.flush();
             bos.close();
-            /
+            *//*
 
-           InputStream is=bp;
-           OutputStream os=new FileOutputStream(sdIconStorageDir);
+            OutputStream ois=new FileOutputStream(sdIconStorageDir);
+            InputStream is=bp.compress(CompressFormat.JPEG,100,ois);
            byte[] data= new byte[is.available()];
            is.read(data);
-           os.write(data);
+           ois.write(data);
            is.close();
-           os.close();
+           ois.close();
         } catch (FileNotFoundException e) {
             Log.w("TAG", "Error saving image file: " + e.getMessage());
             return false;
@@ -113,6 +115,34 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
         return true;
+    }*/
+
+    public void SaveImage(Bitmap showedImgae) {
+
+        String root = Environment.getExternalStorageDirectory().toString();
+        File myDir = new File(root + "/DCIM/myCapturedImages");
+        myDir.mkdirs();
+        Random generator = new Random();
+        int n = 10000;
+        n = generator.nextInt(n);
+        String fname = "FILENAME-" + n + ".jpg";
+        File file = new File(myDir, fname);
+        if (file.exists()) file.delete();
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            showedImgae.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            Toast.makeText(MainActivity.this, "Image Saved", Toast.LENGTH_SHORT).show();
+            out.flush();
+            out.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        Uri contentUri = Uri.fromFile(file);
+        mediaScanIntent.setData(contentUri);
+        getApplicationContext().sendBroadcast(mediaScanIntent);
     }
 
 
@@ -124,7 +154,8 @@ public class MainActivity extends AppCompatActivity {
             Bitmap bp = (Bitmap) data.getExtras().get("data");
             capturedImage.setImageBitmap(bp);
 
-            storeImage(bp,"kanchu");
+            //storeImage(bp,"kanchu");
+            SaveImage(bp);
         }
     }
 
